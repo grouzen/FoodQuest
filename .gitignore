@@ -15,3 +15,4 @@
 local.properties
 app/build
 .idea
+app/src/main/res/raw/music.mp3

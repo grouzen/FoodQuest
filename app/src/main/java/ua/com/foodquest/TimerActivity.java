@@ -31,7 +31,9 @@ public class TimerActivity extends AppCompatActivity {
     Intent epilogueIntent;
     long millisLeft;
     CountDownTimer timer;
-    MediaPlayer mediaPlayer;
+    MediaPlayer laughPlayer;
+    MediaPlayer musicPlayer;
+    Bundle bundle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,21 +50,36 @@ public class TimerActivity extends AppCompatActivity {
         minutesLeftInput.setVisibility(View.INVISIBLE);
         looserView.setVisibility(View.INVISIBLE);
 
-        mediaPlayer = MediaPlayer.create(getApplicationContext(), R.raw.laugh);
+        bundle = getIntent().getExtras();
 
-        showTimer();
+        laughPlayer = MediaPlayer.create(getApplicationContext(), R.raw.laugh);
+        musicPlayer = MediaPlayer.create(getApplicationContext(), R.raw.music);
+
+        long leftMillis = getLeftMillis();
+
+        showTimer(leftMillis);
+        startMusic(leftMillis);
     }
 
-    private void showTimer() {
-        Bundle bundle = getIntent().getExtras();
-        long timerLeft;
-
+    private long getLeftMillis() {
         if (bundle != null) {
-            timerLeft = bundle.getLong(EXTRA_TIMER_LEFT, TIMER_DEADLINE * 1000);
-
-            minutesLeftInput.setVisibility(View.VISIBLE);
+            return bundle.getLong(EXTRA_TIMER_LEFT, TIMER_DEADLINE * 1000);
         } else {
-            timerLeft = TIMER_DEADLINE * 1000;
+            return TIMER_DEADLINE * 1000;
+        }
+    }
+
+    private void startMusic(long leftMillis) {
+        int base = (int) TIMER_DEADLINE * 1000;
+        int msec = base - (int) leftMillis;
+
+        musicPlayer.seekTo(msec);
+        musicPlayer.start();
+    }
+
+    private void showTimer(long timerLeft) {
+        if (bundle != null) {
+            minutesLeftInput.setVisibility(View.VISIBLE);
         }
 
         handleInput();
@@ -85,13 +102,16 @@ public class TimerActivity extends AppCompatActivity {
 
                 @Override
                 public void onFinish() {
-                    mediaPlayer.start();
+                    laughPlayer.start();
 
                     String formatted = formatTime(0);
                     timerView.setText(formatted);
                     timerView.setTextColor(Color.RED);
 
                     looserView.setVisibility(View.VISIBLE);
+
+                    // Force to show input
+                    minutesLeftInput.setVisibility(View.VISIBLE);
 
                     timer.cancel();
                     millisLeft = 0;
@@ -105,8 +125,10 @@ public class TimerActivity extends AppCompatActivity {
             timerView.setTextColor(Color.RED);
 
             looserView.setVisibility(View.VISIBLE);
-        }
 
+            // Force to show input
+            minutesLeftInput.setVisibility(View.VISIBLE);
+        }
     }
 
     private String formatTime(long secondsLeft) {
@@ -135,7 +157,8 @@ public class TimerActivity extends AppCompatActivity {
                         if (number <= INPUT_ANSWER && symbol == '#') {
                             epilogueIntent.putExtra(EXTRA_TIMER_LEFT, millisLeft);
 
-                            mediaPlayer.stop();
+                            laughPlayer.stop();
+                            musicPlayer.pause();
                             startActivity(epilogueIntent);
                             timer.cancel();
                         }
@@ -160,6 +183,7 @@ public class TimerActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
+        // Disable to go back
     }
 
 }
